@@ -1,0 +1,104 @@
+##--Aula 05--##
+Objetivo: Fazer operações com raster 
+
+##--Pacotes aqui--##
+library(raster)
+library(sf)
+library(terra)
+
+##--Operações de objetos raster--##
+
+##--obtendo o raster--##
+manaus_landsat <- "C:/Users/Max Lima/Desktop/tosca/spatialdata/turma_01_2025_graduação/aulas/file355848e93aae.tif"
+manaus_landsat_rast <- raster::brick(manaus_landsat)
+manaus_landsat_rast
+
+##-- Subconjunto - Seleção de camadas
+manaus_lansat_B <- subset(manaus_landsat_rast, 2)
+manaus_lansat_B <- raster(manaus_landsat_rast, layer = 2)
+manaus_lansat_B_N <- subset(manaus_landsat_rast, 2:5)
+
+##--Nomes das Bandas--##
+names(manaus_lansat_B)
+names(manaus_lansat_B_N)
+
+##-- Renomear camadas
+names(manaus_lansat_B) <- "Azul"
+names(manaus_lansat_B_N) <- c("Azul", "Verde", "Vermelho", "InfVer")
+
+##
+
+#--Estatística das células
+
+#--Obtenção de Valores--#
+values(manaus_lansat_B)
+
+#--Número de linhas, colunas e células--#
+nrow(manaus_lansat_B)
+ncol(manaus_lansat_B)
+ncell(manaus_lansat_B)
+
+##--Resolução--##
+res(manaus_lansat_B)
+
+##--extensão do raster--##
+extent(manaus_lansat_B)
+
+
+#--média--#
+cellStats(x = manaus_lansat_B, stat = mean)
+
+#--desvio padrão--#
+cellStats(x = manaus_lansat_B, stat = sd)
+
+#--assimetria--#
+cellStats(x = manaus_lansat_B, stat = "skew")
+
+#--Frequência--##
+freq(x = manaus_lansat_B) 
+freq(x = manaus_lansat_B, useNA = "no") 
+freq(x = manaus_lansat_B, digits = 3, useNA = "no")
+
+#--histograma--#
+B <- values(manaus_lansat_B)
+hist(B, col = "steelblue", border = "white", main = NA, ylab = "Frequência", xlab = "reflectânia Banda B")
+
+##--Operações Algébricas de raster
+log_manaus_lansat_B <- log(manaus_lansat_B)
+exp_manaus_lansat_B <- exp(manaus_lansat_B)
+sum_manaus_lansat_B <- manaus_lansat_B + 2*exp(manaus_lansat_B) 
+div_manaus_lansat_B <- exp_manaus_lansat_B/sum_manaus_lansat_B
+
+##--Operações com Operador lógico--##
+manaus_lansat_B_acima_media_0.05 <- manaus_lansat_B > 0.05
+
+##-- Operação de Reclassificação
+cellStats(x = manaus_lansat_B, stat = min)
+cellStats(x = manaus_lansat_B, stat = max)
+
+rcl  <- matrix(
+  c(-0.1, 0.1, 1, 0.1, 0.2, 2, 0.2,0.5, 3), 
+  ncol = 3, byrow = TRUE)
+rcl
+
+rc_manaus_lansat_B <- raster::reclassify(x = manaus_lansat_B, rcl = rcl)
+plot(rc_manaus_lansat_B)
+
+##--Operações zonais - Estatística por zonas--##
+ manaus_lansat_B_zonal <- data.frame(raster::zonal(manaus_lansat_B, rc_manaus_lansat_B, fun = "mean", na.rm=TRUE))
+ manaus_lansat_B_zonal
+
+manaus_lansat_B_zonal <- data.frame(raster::zonal(manaus_lansat_B, rc_manaus_lansat_B, fun = "summary"))
+manaus_lansat_B_zonal
+
+##--Operações com funções: Função calc()
+manaus_lansat_B_abaixo_02 <- raster::calc(x = manaus_lansat_B, fun = function(x) ifelse(x < 0.2, 1, NA))
+manaus_lansat_B_abaixo_02
+
+##--Operações com funções: Distância Euclideana
+manaus_lansat_B_dist <- raster::distance(manaus_lansat_B_abaixo_02)
+manaus_lansat_B_dist
+
+plot(manaus_lansat_B_dist, col = viridis::viridis(10))
+plot(manaus_lansat_B_abaixo_02, add = TRUE, col = "white", legend = FALSE)
+plot(rc_2020$geom, col = NA, border = "red", lwd = 2, add = TRUE)

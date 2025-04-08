@@ -1,0 +1,175 @@
+﻿##-- sf: principal pacote no R para dados vetoriais
+##-- Criação e operação com objetos vetorias!
+
+
+##-- Criação de objetos vetoriais:
+-Um ponto: st_point()
+-Uma string de linha: st_linestring()
+-Um polígono: st_polygon()
+-Um multiponto: st_multipoint()
+-Uma string multilinha: st_multilinestring()
+-Um multipolígono: st_multipolygon()
+-Uma coleção de geometria: st_geometrycollection()
+
+
+## -- Exemplos
+library(sf)
+
+
+#--A função st_point() cria pontos a partir de um vetor numéricos:
+ponto <- st_point(c(5, 2))
+class(ponto)
+[1] "XY"    "POINT" "sfg"
+
+
+#-- A função st_multipoint() cria pontos a partir de uma matriz de pontos:
+ponto <- st_point(c(5, 2))
+
+
+p <- rbind(c(3.2,4), c(3,4.6), c(3.8,4.4), c(3.5,3.8), c(3.4,3.6), c(3.9,4.5))
+mp <- st_multipoint(p)
+plot(mp)
+class(mp)
+
+
+#-- A função st_polygon() cria poligonos a partir de uma 
+#--lista de uma matriz de vetores:
+p1 <- rbind(c(0,0), c(1,0), c(3,2), c(2,4), c(1,4), c(0,0))
+pol1 <- st_polygon(list(p1))
+plot(pol1)
+class(pol1)
+##--[1] "XY"      "POLYGON" "sfg"    
+ 
+p2 <- rbind(c(1,1), c(1,2), c(2,2), c(1,1))
+pol <-st_polygon(list(p1,p2))
+class(pol)
+##--[1] "XY"      "POLYGON" "sfg"
+plot(pol)
+
+
+
+
+##--Criação de Mulpoligonos
+p1 <- rbind(c(0,0), c(1,0), c(3,2), c(2,4), c(1,4), c(0,0))
+p2 <- rbind(c(1,1), c(1,2), c(2,2), c(1,1))
+p3 <- rbind(c(3,0), c(4,0), c(4,1), c(3,1), c(3,0))
+p4 <- rbind(c(3.3,0.3), c(3.8,0.3), c(3.8,0.8), c(3.3,0.8), c(3.3,0.3))[5:1,]
+p5 <- rbind(c(3,3), c(4,2), c(4,3), c(3,3))
+mpol <- st_multipolygon(list(list(p1,p2), list(p3,p4), list(p5)))
+plot(mpol)
+class(mpol)
+
+
+##--Criação de objetos linhas e Multilinhas
+s1 <- rbind(c(0,3),c(0,4),c(1,5),c(2,5))
+ls <- st_linestring(s1)
+plot(ls)
+
+
+s2 <- rbind(c(0.2,3), c(0.2,4), c(1,4.8), c(2,4.8))
+s3 <- rbind(c(0,4.4), c(0.6,5))
+mls <- st_multilinestring(list(s1,s2,s3))
+plot(mls)
+
+
+##--Criação de coleções geométricas
+gc <- st_geometrycollection(list(mp, mpol, ls))
+
+
+##--Um sfg objeto contém apenas uma única geometria  
+##-- várias geometrias formam um objeto sfc
+# sfc POINT
+point1 = st_point(c(5, 2))
+point2 = st_point(c(1, 3))
+points_sfc = st_sfc(point1, point2)
+points_sfc
+
+
+##-- Isto pode ser realizado para as outras geometrias
+polygon_list1 = list(rbind(c(1, 5), c(2, 2), c(4, 1), c(4, 4), c(1, 5)))
+polygon1 = st_polygon(polygon_list1)
+polygon_list2 = list(rbind(c(0, 2), c(1, 2), c(1, 3), c(0, 3), c(0, 2)))
+polygon2 = st_polygon(polygon_list2)
+polygon_sfc = st_sfc(polygon1, polygon2)
+polygon_sfc
+
+
+##--as geometrias anteriores não pertencen a nenhum espaço
+##--geoespacial pois não tem CRS definida.
+##-- veja por exemplo:
+st_crs(points_sfc)
+
+
+
+
+# adicionando um crs: EPSG 
+points_sfc_wgs = st_sfc(point1, point2, crs = 4326)
+points_sfc_wgs
+st_crs(points_sfc_wgs)
+
+
+polygon_sfc_sigas = st_sfc(polygon1, polygon2, crs = 31980)
+polygon_sfc_sigas
+st_crs(polygon_sfc_sigas)
+
+
+
+
+## leitura de um arquivo
+##-- a leitura um dado vetorial organizado
+
+
+nc <- st_read(system.file("shape/nc.shp", package="sf"))
+
+
+##--Operações com objetos sf
+class(nc): identifica a classe do objeto
+st_drop_geometry(): extrai o data frame do objeto sf
+st_geometry(): extrai a parte geométrica do objeto sf 
+nc_df <- nc %>% st_drop_geometry()
+nc_df
+nc_geo <- st_geometry(nc)
+plot(nc_geo)
+
+
+st_centroid(): identifica o centro de objetos geoespaciais
+centroid <- st_centroid(nc_geo)
+
+
+## Plot
+plot(nc_geo)
+plot(centroid, cex = 0.5, pch = 20, add = TRUE)
+
+
+## st_union(): extrair somente o contorno do objeto
+
+
+nc_cont <- st_union(nc) 
+plot(nc_cont)
+
+
+##--Gerando Pontos aleatórios dentro de um poligono
+nc_sample <- st_sample(nc_cont, size = 30)
+plot(nc_cont)
+plot(nc_sample, cex = 0.5, pch = 20, add = TRUE)
+
+
+##--Buffers: é uma unidade amostral entorno de algum ponto
+nc_buffer_c <- st_buffer(nc_sample, dist = 10000)
+
+
+plot(nc_cont)
+plot(nc_buffer_c, border = "red", add = TRUE)
+plot(nc_sample, cex = 0.5, pch = 20, add = TRUE)
+
+
+##---selecionar subconjuntos
+nc5 <- nc[1:5, ]
+plot(st_geometry(nc[1,]))
+plot(st_union(nc[1,]))
+ 
+st_area(nc[1, ])
+
+
+## para ver todas as funções
+methods(class = "sf")

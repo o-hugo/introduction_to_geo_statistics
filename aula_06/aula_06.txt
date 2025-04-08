@@ -1,0 +1,113 @@
+##--Aula 06--##
+##-- continuação da aula 05: operações com raster
+
+##--Pacotes aqui--##
+library(raster)
+library(sf)
+library(terra)
+
+
+
+##--obtendo a imagem no pc--##
+manaus_landsat <- "C:/Users/Aluno/Desktop/professor/file355848e93aae.tif"
+
+##--explorando a imagem com o pacote raster--## 
+manaus_landsat_rast <- raster::brick(manaus_landsat)
+plotRGB(manaus_landsat_rast, r=4, g=3, b=2, stretch="lin")
+
+##--operação mask para ajuste de imagens--##
+#--obtendo a mascara de manaus--#
+manaus_map <- sf::st_read("C:/Users/Aluno/Desktop/professor/Bairros/AreaUrbanaTotalBairrosManaus_UTMSIRGAS2000_pol.shp")
+
+manaus_map <- sf::st_transform(manaus_map, crs = sf::st_crs(manaus_landsat_rast)) 
+map <- sf::st_union(manaus_map) |> sf::st_sf()
+plot(map)
+
+##--obtendo a mascara do manaus_landsat_rast--##
+manaus_landsat_rast <- mask(manaus_landsat_rast, map)
+plot(manaus_landsat_rast)
+
+##--obtendo a densidade (distribuição e probabilidade da imagem)
+density(manaus_landsat_rast)
+
+
+
+##--construindo um objeto raster no pacote raster--##
+raster_r = raster(nrows = 100, ncols = 100, 
+                  xmn = -100, xmx = 100, ymn = -100, ymx = 100,
+                  vals = runif(10000), crs = 4326)
+
+
+##--Obtendo a resolução de um raster: use o comando res(nome do raster)
+#-exemplo
+res(raster_r)
+
+##--Agregação em um raster - Aumentar o tamanho do pixel
+#- A agregação agrupa áreas retangulares para criar 
+#- células maiores. O valor das células resultantes é calculado com uma função 
+#- especificada pelo usuário.
+#-exemplo
+par(mfrow=c(2,2))
+plot(raster_r, main = "original")
+raster_agreg_10_mean <- raster::aggregate(x = raster_r, fact = 10, fun = "mean")
+plot(raster_agreg_10_mean, main = "fator de agregação 10")
+raster_agreg_10_median_2_5 <- raster::aggregate(x = raster_r, fact = c(2,5), fun = "median") 
+plot(raster_agreg_10_median_2_5, main = "fator de agregação (2,5)")
+raster_agreg_10_max_5_2 <- raster::aggregate(x = raster_r, fact = c(5,2), fun = "max") 
+plot(raster_agreg_10_max_5_2, main = "fator de agregação (5,2)")
+
+
+##--Desagregação - Diminuir o tamanho do pixel
+#--Desagregar uma RasterLayer para criar um novo 
+#--RasterLayer com uma resolução mais alta (células menores).
+#--Os valores no novo RasterLayer são os mesmos das células 
+#--originais maiores, a menos que você especifique , caso em que os valores são interpolados 
+#--localmente (usando a função) method="bilinear".
+
+#-exemplo
+raster_disagreg_4 <- raster::disaggregate(raster_r, fact = 4, fun = "bilinear")
+res(raster_disagreg_4)
+
+par(mfrow=c(1,2))
+plot(raster_r, main = "original")
+plot(raster_disagreg_4, main = "disagregado, fator = 4")
+
+##--Selecionado uma amostra aleatória dos valores de celas de um objeto Raste
+amostra_selecionada_raster <- sampleRandom(raster_r, size=10, cells=TRUE)
+amostra_selecionada_raster
+
+##-- Cortes e extensão em um raster
+
+e <- extent(-20, 20, -20, 40) ## uma sub região 
+valores_e <- extract(raster_r,e)
+
+raster_novo = raster(nrows = 100, ncols = 100, 
+                  xmn = -20, xmx = 20, ymn = -140, ymx = 140,
+                  vals = runif(10000), crs = 4326)
+
+## plot dos raster criados
+par(mfrow = c(1,2))
+plot(raster_r)
+plot(raster_novo)
+
+raster_interseção <- crop(raster_r, raster_novo)
+par(mfrow = c(1,3))
+plot(raster_r)
+plot(raster_novo)
+plot(raster_interseção)
+
+##--Conversão de raster para vetor
+#- Vetorização - Raster para pontos
+raster_pontos <- raster::rasterToPoints(raster_r, spatial = TRUE) |> sf::st_as_sf()
+plot(raster_pontos)
+
+#- Vetorização - Raster para poligonos
+rc_rasterizacao_poligonos <- raster::rasterToPolygons(rc) |> sf::st_as_sf()
+plot(raster_r)
+plot(rc_rasterizacao_poligonos$geom, add = TRUE)  
+
+##--índices espectrais obtidos via landsat--##
+https://www.usgs.gov/landsat-missions/landsat-surface-reflectance-derived-spectral-indices
+
+
+

@@ -1,0 +1,185 @@
+﻿library(sf)
+library(rsi)
+library(raster)
+library(terra)
+
+
+raster_t = rast(nrows = 6, ncols = 6, 
+                  xmin = -1.5, xmax = 1.5, ymin = -1.5, ymax = 1.5,
+                  vals = runif(36))
+
+
+raster_r = raster(nrows = 6, ncols = 6, 
+                  xmn = -1.5, xmx = 1.5, ymn = -1.5, ymx = 1.5,
+                  vals = runif(36), crs = 4326)
+
+
+##--caixa circular--##
+manaus = st_point(c(-59.9825, -3.1316))
+manaus = st_sfc(manaus, crs = "EPSG:4326")
+manaus = st_buffer(st_transform(manaus, crs = "EPSG:31980"), 100)
+
+
+##---caixa retangular---##
+manaus <- sf::st_bbox(
+  c(xmin = 820599.5, ymin = 9649968, xmax = 854014.7, ymax = 9677464),
+  crs = 31980
+)
+manaus <- sf::st_as_sf(sf::st_as_sfc(manaus))
+
+
+manaus_landsat = get_landsat_imagery(
+    manaus,
+    start_date = "2023-09-01",
+    end_date = "2023-09-30",
+    output_filename = tempfile(fileext = ".tif")
+)
+
+
+manaus_landsat_inv = get_landsat_imagery(
+    manaus,
+    start_date = "2023-03-01",
+    end_date = "2023-03-31",
+    pixel_x_size = 15,
+    pixel_y_size = 15,
+    output_filename = tempfile(fileext = ".tif")
+)
+
+
+manaus_landsat_ver = get_landsat_imagery(
+    manaus,
+    start_date = "2023-09-01",
+    end_date = "2023-09-30",
+    pixel_x_size = 15,
+    pixel_y_size = 15,
+    output_filename = tempfile(fileext = ".tif")
+)
+
+
+manaus_landsat_inv
+manaus_landsat_rast <- terra::rast(manaus_landsat_inv)
+manaus_landsat_rast
+terra::plotRGB(manaus_landsat_rast,r=4, g = 3, b=2, stretch = "lin" )
+
+
+
+
+##--manipulação de objetos raster--##
+
+
+manaus_landsat_inv = get_landsat_imagery(
+    manaus,
+    start_date = "2023-03-01",
+    end_date = "2023-03-31",
+    pixel_x_size = 15,
+    pixel_y_size = 15,
+    output_filename = tempfile(fileext = ".tif")
+)
+manaus_landsat_inv
+manaus_landsat_inv_rast <- terra::rast(manaus_landsat_inv)
+manaus_landsat_inv_rast
+terra::plotRGB(manaus_landsat_inv_rast,r=4, g = 3, b=2, stretch = "lin" )
+
+
+
+
+library(sf)
+library(rsi)
+
+
+##---caixa manaus---##
+manaus <- sf::st_bbox(
+  c(xmin = 820599.5, ymin = 9649968, xmax = 854014.7, ymax = 9677464),
+  crs = 31980
+)
+manaus <- sf::st_as_sf(sf::st_as_sfc(manaus))
+
+
+manaus_landsat = get_landsat_imagery(
+    manaus,
+    start_date = "2023-09-01",
+    end_date = "2023-09-30",
+    output_filename = tempfile(fileext = ".tif")
+)
+
+
+manaus_landsat
+manaus_landsat_rast <- terra::rast(manaus_landsat)
+manaus_landsat_rast
+terra::plotRGB(manaus_landsat_rast,r=4, g = 3, b=2, stretch = "lin" )
+
+
+##---leitura da imagem---##
+library(terra)
+manaus_im <- "C:/Users/Max Lima/Desktop/tosca/spatialdata/turma_01_2025_graduação/aulas/file35303f22729d.tif"
+ma_im_raster <- terra::rast(manaus_im)
+
+
+par(mfrow = c(2,2))
+plot(ma_im_raster[[2]], main = "Blue", col = gray(0:100 / 100))
+plot(ma_im_raster[[3]], main = "Green", col = gray(0:100 / 100))
+plot(ma_im_raster[[4]], main = "Red", col = gray(0:100 / 100))
+plot(ma_im_raster[[5]], main = "NIR", col = gray(0:100 / 100))
+terra::plotRGB(ma_im_raster, r=4, g = 3, b=2, stretch = "lin" )
+terra::plotRGB(ma_im_raster, r=5, g = 4, b=3, stretch = "lin" )
+
+
+ndvi <- function(x, y) {
+    (x - y)/(x + y)
+                       }
+
+
+nir <- ma_im_raster[[5]]
+red <- ma_im_raster[[4]]
+
+
+ndvi_ma <- lapp(c(nir, red), fun = ndvi)
+
+
+
+
+ma <- raster::brick(manaus_im)
+par(mfrow = c(2,2))
+plot(ma[[2]], main = "Blue", col = gray(0:100 / 100))
+plot(ma[[3]], main = "Green", col = gray(0:100 / 100))
+plot(ma[[4]], main = "Red", col = gray(0:100 / 100))
+plot(ma[[5]], main = "NIR", col = gray(0:100 / 100))
+
+
+ma1 <- subset(ma, 2:5)
+
+
+plotRGB(ma, r=5, g = 4, b=3, stretch = "lin")
+viewRGB(ma, r=5, g = 4, b=3, stretch = "lin")
+
+
+manaus_map <- sf::st_read("C:/Users/Max Lima/Desktop/tosca/Spatial_Machine_Learning/spatial_R/mini_curso/minicurso/dia_01/Bairros/AreaUrbanaTotalBairrosManaus_UTMSIRGAS2000_pol.shp")
+manaus_map <- sf::st_transform(manaus_map, crs = 31980) 
+map <- sf::st_union(manaus_map) |> sf::st_sf()
+plot(map)
+a <- raster::mask(ma, map)
+viewRGB(a, r=4, g = 3, b=2, na.col="transparent")
+
+
+
+
+##---imagem manaus---##
+
+
+ma <- bb("manaus", projection = 4326) 
+ma <- sf::st_as_sf(sf::st_as_sfc(ma))
+ma <- st_transform(ma, crs = "EPSG:31980")
+
+
+manaus_landsat = get_landsat_imagery(
+    ma,
+    start_date = "2023-09-01",
+    end_date = "2023-09-30",
+    output_filename = tempfile(fileext = ".tif")
+)
+
+
+manaus_landsat
+manaus_landsat_rast <- terra::rast(manaus_landsat)
+manaus_landsat_rast
+terra::plotRGB(manaus_landsat_rast,r=4, g = 3, b=2, stretch = "lin" )

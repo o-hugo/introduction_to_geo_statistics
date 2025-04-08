@@ -1,0 +1,239 @@
+﻿library(sf)
+library(rsi)
+library(raster)
+library(terra)
+
+
+##--como construir um objeto raster no pacote terra--##
+raster_t = rast(nrows = 6, ncols = 6, 
+                  xmin = -1.5, xmax = 1.5, ymin = -1.5, ymax = 1.5,
+                  vals = runif(36))
+
+
+##--como construir um objeto raster no pacote raster--##
+raster_r = raster(nrows = 6, ncols = 6, 
+                  xmn = -1.5, xmx = 1.5, ymn = -1.5, ymx = 1.5,
+                  vals = runif(36), crs = 4326)
+
+
+##--Obtendo um objeto raster de uma imagem de satélite landsat usando o pacote rsi 
+#---Obtenção de uma imagem de manaus usando um buffer circular
+manaus = st_point(c(-59.9825, -3.1316)) ##--(lat,long) de manaus
+manaus = st_sfc(manaus, crs = "EPSG:4326") ##--localização de manaus no crs padrão do R--##
+manaus = st_buffer(st_transform(manaus, crs = "EPSG:31980"), 100) ##--criação de um buffer sobre manaus nao crs apropriado
+
+
+##--código para obtenção da imagem usando o pacote rsi
+manaus_landsat = get_landsat_imagery(
+    manaus,
+    start_date = "2023-09-01",
+    end_date = "2023-09-30",
+    output_filename = tempfile(fileext = ".tif")
+)
+#---fim da obtenção da imagem usando buffer---#
+#---Obtenção de uma imagem de manaus usando um bbox
+manaus <- sf::st_bbox(
+  c(xmin = 820599.5, ymin = 9649968, xmax = 854014.7, ymax = 9677464),
+  crs = 31980
+)
+class(manaus)
+
+
+manaus <- st_as_sf(st_as_sfc(manaus))
+## manaus <- st_as_sfc(manaus) %>% st_as_sf()
+class(manaus)
+
+
+manaus_landsat = get_landsat_imagery(
+    manaus,
+    start_date = "2024-09-01",
+    end_date = "2024-09-30",
+    output_filename = tempfile(fileext = ".tif")
+)
+manaus_landsat ## veja onde a imagem foi armazenada no seu computador
+
+
+##--- leitura da imagem armazenada no pc---##
+##--- manaus_landsat <- "enderço/arquivo.tif" ---##
+
+
+##--explorando a imagem com o pacote raster--## 
+manaus_landsat_layer <- raster::raster(manaus_landsat)
+manaus_landsat_layer
+manaus_landsat_rast <- raster::brick(manaus_landsat)
+
+
+manaus_landsat_rast
+class      : RasterBrick 
+dimensions : 917, 1114, 1021538, 8  (nrow, ncol, ncell, nlayers)
+resolution : 30, 30  (x, y)
+extent     : 820599.5, 854019.5, 9649954, 9677464  (xmin, xmax, ymin, ymax)
+crs        : +proj=utm +zone=20 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs 
+source     : file355848e93aae.tif 
+names      : A, B, G, R, N, S1, S2, T1 
+
+
+A = utravioleta; B = blue (azul); G = green (verde) ; R = red (vermelho)
+N = nir (infravermelho próximo); S1 = infravermelho médio;
+S2 = infravermelho distante; T1 = infravermelho térmico (ver imagem)
+
+
+#--selecionando bandas específicas usando a função subset ou via indexação--#.
+sub_im1 <- subset(manaus_landsat_rast, 1:3)
+sub_im2 <- manaus_landsat_rast[[1:3]]
+
+
+#--Valores do raster
+sub_imN <- manaus_landsat_rast[[5]]
+values(sub_imN) %>% head()
+#--Os valores nos pixeis da imagem significam valores de reflectância em cada uma das bandas  
+##-- Ou seja, o quanto de luz está retornando dos objetos alvos na terra até o sensor do satélite.
+
+
+#--Mapas de bandas em tons de cinza--##
+plot(manaus_landsat_rast, col = gray(0:256 / 256))
+##-- veja a diferença entre as duas imagens
+ 
+#-Observe a diferença no sombreamento e no intervalo das 
+#-legendas entre as diferentes bandas. 
+#-Isso ocorre porque diferentes características 
+#-da superfície refletem a radiação solar incidente 
+#-de forma diferente. Cada camada representa quanta 
+#-radiação solar incidente é refletida para 
+#-uma faixa de comprimento de onda específica. 
+#-Por exemplo, a vegetação reflete mais energia no NIR 
+#-do que em outros comprimentos de onda e, portanto, parece mais brilhante.
+#- a área branca representa uma bacia hidrográfica. 
+
+
+##- Composição Colorida com imagem landsat
+Não obtemos muita informação desses gráficos em escala de cinza;
+eles são frequentemente combinados em um “composto” 
+para criar gráficos mais interessantes.
+Para fazer uma imagem de “cor verdadeira (ou natural)”, 
+ou seja, algo que se pareça com uma fotografia normal 
+(vegetação em verde, água azul etc.), precisamos de bandas 
+nas regiões vermelha, verde e azul.
+
+
+plotRGB(manaus_landsat_rast,r=4, g = 3, b=2, stretch = "lin" )
+
+
+Outra forma popular de visualização de imagem 
+de satélite é a conhecida imagem de “cor falsa”, 
+na qual as bandas IR, vermelha são combinadas. 
+Essa representação é popular, pois facilita a 
+visualização da vegetação.
+
+
+plotRGB(manaus_landsat_rast,r=6, g = 5, b=4, stretch = "lin" )
+
+
+##--Relação entre bandas--##
+Uma matriz de scatterplot pode ser útil 
+para explorar relacionamentos 
+entre camadas raster. Isso pode ser feito com a função "pairs".
+
+
+pairs(manaus_landsat_rast[[1:2]], main = "Ultra-violeta versus Azul")
+
+
+Este gráfico revela altas correlações 
+entre as regiões de comprimento de onda azul. 
+Por causa da alta correlação, podemos usar 
+apenas uma das bandas azuis sem perder 
+de informação.
+
+
+
+
+pairs(manaus_landsat_rast[[4:5]], main = "Vermelho versus NIR")
+
+
+Esta distribuição de pontos no segundo gráfico (entre NIR e vermelho)
+é única devido à sua forma triangular. A vegetação reflete muito 
+mais na faixa NIR do que no vermelho e cria o canto superior 
+próximo ao eixo NIR (y). A água absorve energia de todas as 
+faixas e ocupa o local próximo à origem. 
+O canto mais distante é criado devido a características 
+de superfície altamente refletivas, 
+como solo brilhante ou concreto.
+
+
+##--obtendo índices espectrais de imagem de satélite
+##--Definição: Equação matemática aplicada por pixel em várias 
+bandas espectrais de uma imagem, cuja finalidade é realçar 
+alguma característica na imagem (vegetação, solo, água, incêndios, etc...)
+
+
+##--Normalized Difference Vegetation Index (NDVI)
+## NDVI = (valor do pixel (nir) - valor do pixel no (red)) / (valor do pixel (nir) + valor do pixel no (red) )
+
+
+#- Os valores do NDVI variam de -1 a +1
+#- Valores próximos entre 0,66 e 1,00 indicam maior presença de vegetação
+#- Valores entre 0,66 e 0,33 indica vegetação moderadamente sadia
+#- Valores entre 0,33 e 0,00 indica vegetação deficiente
+#- Valores próximos de 0 são geralmente áreas sem vegetação
+#- Valores próximos de -1 geralmente indicam água
+
+
+## criando uma função para calcular o ndvi
+
+
+vi <- function(img, k, i) {
+  bk <- img[[k]]
+  bi <- img[[i]]
+  vi <- (bk - bi) / (bk + bi)
+  return(vi)
+}
+
+
+# Para o manaus_landsat_rast NIR = 5, red = 4.
+ndvi <- vi(manaus_landsat_rast, 5, 4)
+plot(ndvi, main = "NDVI")
+
+
+##--Limiar
+Podemos aplicar regras básicas para obter uma estimativa 
+da extensão espacial de diferentes características 
+da superfície da Terra. Observe que os valores de NDVI 
+são padronizados e variam entre -1 e +1. 
+Valores mais altos indicam mais cobertura verde.
+
+
+Células com valores de NDVI maiores que 0,33 são definitivamente
+vegetação. A operação a seguir mascara todas 
+as células que talvez não sejam vegetação (NDVI < 0,33).
+
+
+veg <- clamp(ndvi, 0.4, values=FALSE)
+plot(veg, main='Vegetation')
+
+
+##--Histograma do raster
+Podemos explorar a distribuição de valores 
+contidos em nosso raster usando a função "hist" 
+para produzir um histograma. Histogramas são frequentemente 
+úteis para identificar outliers e valores de dados ruins 
+em nossos dados raster.
+
+
+hist(ndvi)
+
+
+#-- Vamos mapear a área que corresponde ao pico 
+entre 0,10 e 0,2 no histograma ndvi.
+
+
+m <- c(-Inf, 0.10, NA,  0.10, 0.2, 1,  0.2, Inf, NA)
+rcl <- matrix(m, ncol = 3, byrow = TRUE)
+land <- terra::classify(as(ndvi, "SpatRaster"), rcl)
+plot(land, main = 'o que é isso?')
+
+
+##-- podemos plotar land sobre o manaus_landsat_rast para descobrir.
+
+
+plotRGB(manaus_landsat_rast, r=1, g=2, b=3, axes=TRUE, stretch="lin")
+plot(land, add=TRUE, legend=FALSE)

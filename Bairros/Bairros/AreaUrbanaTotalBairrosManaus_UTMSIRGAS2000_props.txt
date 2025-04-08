@@ -1,0 +1,22 @@
+Plano de Informação: AreaUrbanaTotalBairrosManaus_UTMSIRGAS2000
+Identificador do Plano: 1263
+
+Coordenada Inicial(X): 153580.756
+Coordenada Inicial(Y): 9649980.883
+Coordenada Final(X): 186996.944
+Coordenada Final(Y): 9677469.339
+
+Projeção: UTM
+Identificador da Projeção: 1385
+Datum: SIRGAS2000
+Unidade: Meters
+Longitude de Origem: -5.700000e+001
+Latitude de Origem: 0.000000e+000
+Offset X: 5.000000e+005
+Offset Y: 1.000000e+007
+Paralelo Padrão 1: 0.000000e+000
+Paralelo Padrão 2: 0.000000e+000
+Escala: 9.996000e-001
+Hemisfério: Sul
+
+Número de polígonos:65
