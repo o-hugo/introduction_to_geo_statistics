@@ -1,0 +1,22 @@
+name: regressao_espacial_r
+
+channels:
+  - r
+  - conda-forge
+  - defaults
+
+dependencies:
+  - r-base=4.3.*
+  - r-sf
+  - r-geobr
+  - r-spdep
+  - r-spatialreg
+  - r-spdata
+  - r-ggplot2
+  - r-tmap
+  - r-leaflet
+  - r-cartogram
+  - r-viridis
+  - r-rcolorbrewer
+  - r-irkernel # Para Jupyter Notebook com R
+  - jupyter

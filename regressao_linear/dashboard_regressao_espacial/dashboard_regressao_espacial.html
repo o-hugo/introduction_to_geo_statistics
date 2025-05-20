@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Regressão Espacial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            margin-right: 0.5rem;
+            border-radius: 0.5rem 0.5rem 0 0;
+            background-color: #e9ecef;
+            color: #495057;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            font-weight: 500;
+        }
+        .tab-button.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .tab-button:hover:not(.active) {
+            background-color: #dee2e6;
+        }
+        .chart-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            height: 400px;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+        .prose {
+            max-width: none;
+        }
+        h2, h3, h4 {
+            color: #334155; /* slate-700 */
+        }
+        .caption {
+            font-size: 0.875rem; /* text-sm */
+            color: #475569; /* slate-600 */
+            margin-top: 0.5rem; /* mt-2 */
+            text-align: center;
+        }
+        .image-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f8fafc; /* slate-50 */
+            border: 1px solid #e2e8f0; /* slate-200 */
+            border-radius: 0.375rem; /* rounded-md */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+            padding: 1rem; /* p-4 */
+            margin-bottom: 1rem;
+        }
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.25rem; /* rounded-sm */
+            border: 1px solid #cbd5e1; /* slate-300 */
+        }
+         /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9; /* slate-100 */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8; /* slate-400 */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; /* slate-500 */
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-4 md:p-8">
+
+    <div class="container mx-auto max-w-7xl">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-sky-700">
+                <i class="fas fa-chart-line mr-2"></i>Dashboard Interativo de Regressão Espacial
+            </h1>
+            <p class="text-lg text-slate-600 mt-2">Explorando e Sumarizando Análises Espaciais em R</p>
+        </header>
+
+        <div class="mb-6 flex flex-wrap border-b border-slate-300">
+            <button class="tab-button active" onclick="openTab(event, 'introducao')"><i class="fas fa-home mr-1"></i> Introdução</button>
+            <button class="tab-button" onclick="openTab(event, 'regLinear')"><i class="fas fa-ruler-combined mr-1"></i> Regressão Linear</button>
+            <button class="tab-button" onclick="openTab(event, 'regEspacialNY')"><i class="fas fa-map-marked-alt mr-1"></i> Reg. Espacial (NY)</button>
+            <button class="tab-button" onclick="openTab(event, 'cartogramas')"><i class="fas fa-vector-square mr-1"></i> Cartogramas (NY)</button>
+            </div>
+
+        <div id="introducao" class="tab-content active card prose lg:prose-xl">
+            <h2 class="text-2xl font-semibold mb-4">Bem-vindo ao Dashboard de Regressão Espacial</h2>
+            <p>Este dashboard interativo foi desenvolvido para explicar e sumarizar os conceitos e aplicações de regressão espacial, com base nos materiais fornecidos (um arquivo PDF conceitual, um script R e as saídas visuais da execução desse script).</p>
+            <p>A análise de dados espaciais considera a localização geográfica como uma variável importante, reconhecendo que "coisas próximas tendem a ser mais relacionadas do que coisas distantes" (Primeira Lei da Geografia de Tobler).</p>
+            
+            <h3 class="text-xl font-semibold mt-6 mb-3">Conteúdo dos Arquivos Fonte:</h3>
+            <ul class="list-disc list-inside space-y-1">
+                <li><strong>Regressão_Espacial.pdf (original):</strong> Introduz a regressão linear clássica e, em seguida, os modelos de regressão espacial (SAR, CAR, GWR).</li>
+                <li><strong>regressao_espacial_doctor.txt (Script R):</strong> Implementa as análises.</li>
+                <li><strong>Imagens (img1.png - img11.png):</strong> Saídas visuais da execução do script R, incorporadas neste dashboard.</li>
+            </ul>
+            <p class="mt-4">Navegue pelas abas para explorar cada seção da análise.</p>
+             <div class="mt-6 p-4 bg-sky-50 border border-sky-200 rounded-lg">
+                <h4 class="font-semibold text-sky-700"><i class="fas fa-tools mr-2"></i>Tecnologias Utilizadas no Dashboard:</h4>
+                <ul class="list-disc list-inside ml-4 text-sm text-slate-700">
+                    <li>HTML, CSS (TailwindCSS)</li>
+                    <li>JavaScript</li>
+                    <li>Chart.js (para gráficos)</li>
+                    <li>Font Awesome (ícones)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="regLinear" class="tab-content card prose lg:prose-xl">
+            <h2 class="text-2xl font-semibold mb-4">Regressão Linear Simples</h2>
+            <p>Exemplo: Planejamento de Propagandas.</p>
+            
+            <h4 class="text-lg font-semibold mt-4 mb-2">Gráfico Interativo (Chart.js):</h4>
+            <div class="chart-container my-6">
+                <canvas id="linearRegressionChart"></canvas>
+            </div>
+
+            <h4 class="text-lg font-semibold mt-6 mb-2">Visualizações do Script R:</h4>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="image-container">
+                    <img src="img1.png" alt="Gráfico de Dispersão: Vendas x Anúncios (R base plot)">
+                    <p class="caption">Gráfico de Dispersão (plot base do R). (Fonte: img1.png)</p>
+                </div>
+                <div class="image-container">
+                    <img src="img2.png" alt="Gráfico de Regressão: Vendas x Anúncios (ggplot2)">
+                    <p class="caption">Linha de Regressão e Intervalo de Confiança (ggplot2). (Fonte: img2.png)</p>
+                </div>
+            </div>
+
+            <h4 class="text-lg font-semibold mt-6">Resultados e Interpretação:</h4>
+            <p>Modelo: $y_{predito} = 117.377 + 9.620x$ (conforme sumário do R em `regressao_linear_NY.pdf`, p. 2).</p>
+            <ul class="list-disc list-inside space-y-1">
+                <li><strong>Intercepto ($\beta_0$):</strong> 117.377</li>
+                <li><strong>Coeficiente de Anúncios ($\beta_1$):</strong> 9.620</li>
+                <li><strong>Correlação (r):</strong> 0.8721 (conforme `cor(x,y)` no R, `regressao_linear_NY.pdf`, p. 2)</li>
+                <li><strong>R-quadrado Ajustado:</strong> 0.7307 (73.07%)</li>
+            </ul>
+        </div>
+
+        <div id="regEspacialNY" class="tab-content card prose lg:prose-xl">
+            <h2 class="text-2xl font-semibold mb-4">Regressão Espacial: Casos de Leucemia em NY (Dataset NY8)</h2>
+            <p>Análise baseada nas saídas visuais do script R.</p>
+
+            <h3 class="text-xl font-semibold mt-6 mb-3">1. Visualização Inicial das Variáveis</h3>
+            <div class="image-container">
+                <img src="img4.jpg" alt="Mapas Temáticos das variáveis do dataset NY8">
+                <p class="caption">Mapas coropléticos: PROPCAS_mil_hab, PCTAGE65P, PEXPOSURE, PCTOWNHOME. (Fonte: img4.jpg)</p>
+            </div>
+
+            <h3 class="text-xl font-semibold mt-6 mb-3">2. Teste de Autocorrelação Espacial (I de Moran) nos Resíduos do Modelo OLS</h3>
+             <p>Após ajustar um modelo linear `nylm <- lm(Z ~ PEXPOSURE + PCTOWNHOME, data = NY8)`, o teste de Moran e o correlograma dos resíduos são analisados.</p>
+            <div class="image-container">
+                <img src="img5.png" alt="Correlograma Espacial dos Resíduos do Modelo Linear (NY8)">
+                <p class="caption">Correlograma espacial (I de Moran) para os resíduos do modelo OLS (`NY8resid`). (Fonte: img5.png)</p>
+            </div>
+            <p class="mt-2">O teste de Moran para os resíduos do modelo `nylm` (saída textual no PDF `regressao_linear_NY.pdf`, p. 6) resultou em: Moran I = 0.1242, p-value = 0.0001098, indicando autocorrelação espacial significativa.</p>
+
+            <h3 class="text-xl font-semibold mt-6 mb-3">3. Ajuste e Comparação de Modelos Espaciais (SAR e CAR)</h3>
+            <p>Modelos SAR e CAR são ajustados. A comparação via AIC (considerando os modelos com matriz de vizinhança `MvizB`, estilo "B" - conforme PDF `regressao_linear_NY.pdf`, p. 11) sugere:</p>
+            <ul class="list-disc list-inside">
+                <li>AIC (Linear OLS): 605.63</li>
+                <li>AIC (SAR com MvizB): 595.83</li>
+                <li>AIC (CAR com MvizB): 594.16</li>
+            </ul>
+            <p>O modelo CAR com matriz `MvizB` (NY8carB) apresenta o menor AIC. No entanto, o script original e as conclusões do material conceitual focam no `NY8car` (com matriz `Mviz` estilo "W"). Para consistência, as visualizações seguintes referem-se ao `NY8car`.</p>
+
+            <h3 class="text-xl font-semibold mt-6 mb-3">4. Visualização do Modelo CAR (`NY8car` com Mviz estilo "W")</h3>
+            <div class="image-container">
+                <img src="img6.png" alt="Mapas Comparando Valores Observados e Ajustados pelo Modelo CAR (NY8)">
+                <p class="caption">Mapas: Valores Observados de Z (esquerda) e Valores Ajustados pelo Modelo CAR (direita). (Fonte: img6.png)</p>
+            </div>
+
+            <h4 class="text-lg font-semibold mt-4">Diagnóstico do Modelo CAR:</h4>
+            <div class="image-container">
+                 <img src="img7.png" alt="Gráficos de Dispersão para Diagnóstico do Modelo CAR (NY8)">
+                 <p class="caption">Diagnóstico do Modelo CAR: Observado vs. Ajustado (esquerda) e Resíduos vs. Ajustado (direita). (Fonte: img7.png)</p>
+            </div>
+
+            <h3 class="text-xl font-semibold mt-6 mb-3">5. Mapa de Risco Relativo e Exposição (Baseado no Modelo CAR)</h3>
+            <div class="image-container">
+                <img src="img8.png" alt="Mapas de Risco Relativo de Casos e Exposição ao TCE (NY8)">
+                <p class="caption">Mapas: Risco Relativo de Casos (calculado com `NY8car`) e Exposição ao TCE (PEXPOSURE). (Fonte: img8.png)</p>
+            </div>
+        </div>
+
+        <div id="cartogramas" class="tab-content card prose lg:prose-xl">
+            <h2 class="text-2xl font-semibold mb-4">Visualização Avançada: Cartogramas (NY8 Risco)</h2>
+            <p>Cartogramas baseados na variável `risco` (calculada com o modelo `NY8car`).</p>
+
+            <div class="grid md:grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="image-container">
+                    <h4 class="text-lg font-semibold mb-2">Cartograma de Área Contínua</h4>
+                    <img src="img9.png" alt="Cartograma de Área Contínua para Risco em NY8">
+                    <p class="caption">Cartograma Contínuo. (Fonte: img9.png)</p>
+                </div>
+                <div class="image-container">
+                    <h4 class="text-lg font-semibold mb-2">Cartograma de Área Não Contígua</h4>
+                    <img src="img10.png" alt="Cartograma de Área Não Contígua para Risco em NY8">
+                    <p class="caption">Cartograma Não Contíguo. (Fonte: img10.png)</p>
+                </div>
+                <div class="image-container">
+                    <h4 class="text-lg font-semibold mb-2">Cartograma de Dorling</h4>
+                    <img src="img11.png" alt="Cartograma de Dorling para Risco em NY8">
+                    <p class="caption">Cartograma de Dorling. (Fonte: img11.png)</p>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        // Function to switch tabs
+        function openTab(event, tabName) {
+            let i, tabcontent, tabbuttons;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+                tabcontent[i].classList.remove("active");
+            }
+            tabbuttons = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tabbuttons.length; i++) {
+                tabbuttons[i].classList.remove("active");
+            }
+            const currentTabContent = document.getElementById(tabName);
+            if (currentTabContent) {
+                currentTabContent.style.display = "block";
+                currentTabContent.classList.add("active");
+            }
+            if (event && event.currentTarget) {
+                 event.currentTarget.classList.add("active");
+            }
+        }
+
+        // --- Linear Regression Chart ---
+        const y_vendas_data = [430, 335, 520, 490, 470, 210, 195, 270, 400, 480];
+        const x_anuncios_data = [30, 21, 38, 42, 37, 20, 8, 17, 35, 25];
+        
+        const y_predito_data = x_anuncios_data.map(x => 117.377 + 9.620 * x);
+
+        const dataPointsForChart = x_anuncios_data.map((val, index) => ({x: val, y: y_vendas_data[index]}));
+        const predictedDataPointsForChart = x_anuncios_data.map((val, index) => ({x: val, y: y_predito_data[index]}));
+
+        const sortedIndicesForChart = Array.from(Array(x_anuncios_data.length).keys()).sort((a, b) => x_anuncios_data[a] - x_anuncios_data[b]);
+        const sorted_x_anuncios_for_chart = sortedIndicesForChart.map(i => x_anuncios_data[i]);
+        const sorted_y_predito_for_chart = sortedIndicesForChart.map(i => y_predito_data[i]);
+
+
+        const ctxLinear = document.getElementById('linearRegressionChart')?.getContext('2d');
+        if (ctxLinear) {
+            new Chart(ctxLinear, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Unidades Vendidas (Observado)',
+                        data: dataPointsForChart,
+                        backgroundColor: 'rgba(0, 123, 255, 0.7)', 
+                        borderColor: 'rgba(0, 123, 255, 1)',
+                        pointRadius: 6,
+                    }, {
+                        label: 'Unidades Vendidas (Predito pelo Modelo)',
+                        data: predictedDataPointsForChart, 
+                        backgroundColor: 'rgba(255, 0, 0, 0.7)', 
+                        borderColor: 'rgba(255, 0, 0, 1)',
+                        pointRadius: 6,
+                        showLine: false, 
+                    }, {
+                        label: 'Linha de Regressão (y = 117.38 + 9.62x)',
+                        data: sorted_x_anuncios_for_chart.map((val, index) => ({x: val, y: sorted_y_predito_for_chart[index]})),
+                        type: 'line',
+                        borderColor: 'rgba(220, 53, 69, 1)', 
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        x: { title: { display: true, text: 'Total de Anúncios (x)'}, beginAtZero: true }, 
+                        y: { title: { display: true, text: 'Unidades Vendidas (y)'}, beginAtZero: true }
+                    },
+                    plugins: { 
+                        tooltip: { 
+                            callbacks: { 
+                                label: function(context) { 
+                                    let label = context.dataset.label || ''; 
+                                    if (label) { label += ': '; } 
+                                    if (context.parsed.y !== null) { label += `(${context.parsed.x}, ${context.parsed.y.toFixed(2)})`; } 
+                                    return label; 
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialActiveButton = document.querySelector('.tab-button.active');
+            if (initialActiveButton) {
+                 openTab({currentTarget: initialActiveButton}, initialActiveButton.getAttribute('onclick').match(/'([^']+)'/)[1]);
+            } else {
+                const firstTabButton = document.querySelector('.tab-button');
+                if (firstTabButton) {
+                     openTab({currentTarget: firstTabButton}, firstTabButton.getAttribute('onclick').match(/'([^']+)'/)[1]);
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>
